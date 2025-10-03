@@ -1,6 +1,6 @@
 # Serverless YOLO: A Framework for Production-Ready, PyTorch-Free Inference
 
-This repository provides a complete, end-to-end framework for converting any **Ultralytics YOLOv8 model** (Detection, Classification, Pose Estimation) into the lightweight **OpenVINO** format and deploying it as a scalable, low-cost serverless function on **AWS Lambda**.
+This repository provides a complete, end-to-end framework for converting any **Ultralytics YOLO model** (Detection, Classification, Pose Estimation) into the lightweight **OpenVINO** format and deploying it as a scalable, low-cost serverless function on **AWS Lambda**.
 
 ---
 
@@ -25,15 +25,15 @@ This project demonstrates a core **MLOps principle**: separating the heavy train
 ├── scripts/
 │   └── export_model.py     # (Dev) Convert .pt models to OpenVINO
 ├── src/
+│   └── lambda_function.py  # Handler code for AWS Lambda
 │   └── inference/          # (Prod) Lightweight, PyTorch-free inference code
 │       ├── classifier.py
 │       ├── detector.py
 │       ├── pose_estimator.py
 │       └── utils.py
 ├── Dockerfile              # Defines serverless container environment
-├── lambda_function.py      # Handler code for AWS Lambda
-├── requirements-dev.txt    # Heavy dependencies (conversion)
-└── requirements-prod.txt   # Lightweight dependencies (inference)
+├── requirements_dev.txt    # Heavy dependencies (conversion)
+└── requirements_prod.txt   # Lightweight dependencies (inference)
 ```
 
 ---
@@ -54,17 +54,22 @@ pip install -r requirements-dev.txt
 
 ```bash
 python scripts/export_model.py \
-    --model-path "path/to/your/yolov8n.pt" \
+    --model-path "path/to/your/yolov11n.pt" \
     --task "detect" \
-    --output-dir "models"
 ```
 
-This will create a `yolov8n_openvino_model` folder inside `models/` containing:
+This will create a `yolov11n_openvino_model` folder inside `models/` containing:
 
 * `.xml`
 * `.bin`
 * `metadata.yaml`
 
+Examples:
+```bash
+python scripts/export_model.py --model-path models/yolo11n.pt --task detect
+python scripts/export_model.py --model-path models/yolo11n-cls.pt --task classify
+python scripts/export_model.py --model-path models/yolo11n-pose.pt --task pose
+```
 ---
 
 ### **Stage 2: Inference & Deployment (Production Environment)**
@@ -92,60 +97,30 @@ notebooks/test_inference.ipynb
 ```
 
 ---
-
 ## Deploying to AWS Lambda
 
-The included **Dockerfile** and **src/lambda_function.py** allow deployment as a serverless function.
-
-### **Build the Docker Image**
-
-```bash
-docker build -t serverless-yolo-inference .
-```
-
-### **Push to Amazon ECR**
-
-1. Create a repository in ECR.
-2. Authenticate Docker to your registry.
-3. Tag and push your image (follow AWS console commands).
+The included **Dockerfile**, **Serverless.yml** and **src/lambda_function.py** allow deployment as a serverless function.
 
 ### **Create & Configure the Lambda Function**
+* In Serverless YML file
+  * Change the name of the service
+  * Add ro rename the lambda function's name
+    * **Memory** → `1024 MB`
+    * **Timeout** → `30s`
 
-* In AWS Lambda console:
-
-  * Create new function → "Container image".
-  * Select your pushed image.
-* Increase defaults:
-
-  * **Memory** → `1024 MB`
-  * **Timeout** → `30s`
-* Add environment variables:
-
-**Examples:**
-
-Detection:
-
+* Add .env file containing the environment variables:
 ```
-YOLO_TASK=detect
-MODEL_XML_PATH=/app/models/yolo11n_openvino_model/yolo11n.xml
+YOLO11_DET_XML_PATH=/models/yolo11n_openvino_model/yolo11n.xml
+YOLO11_CLS_XML_PATH=models/yolo11n-cls_openvino_model/yolo11n-cls.xml
+YOLO11_POSE_XML_PATH=/app/models/yolo11n-pose_openvino_model/yolo11n-pose.xml
 ```
 
-Classification:
-
-```
-YOLO_TASK=classify
-MODEL_XML_PATH=/app/models/yolo11n-cls_openvino_model/yolo11n-cls.xml
-```
-
-Pose Estimation:
-
-```
-YOLO_TASK=pose
-MODEL_XML_PATH=/app/models/yolo11n-pose_openvino_model/yolo11n-pose.xml
+### **Build and deploy the Docker Image with dependencies**
+```bash
+sls deploy
 ```
 
 ---
-
 ## Invoke the Function
 
 Test with API Gateway or Lambda console's "Test" tab.

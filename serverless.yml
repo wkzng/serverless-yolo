@@ -1,5 +1,5 @@
 
-service: serverless_yolo
+service: demo-serverless-yolo
 
 frameworkVersion: '3'
 useDotenv: true
@@ -12,9 +12,12 @@ provider:
   region: ${env:AWS_REGION, 'us-east-1'}
   ecr:
     images:
-      martech_inference:
+      demo_ecr_image:
         path: ./
         platform: linux/amd64
+  environment:
+    STAGE: ${self:provider.stage}
+
 
 package:
   patterns:
@@ -38,11 +41,11 @@ custom:
     number: 2
 
 functions:
-  analyseImageCreative:
-    handler: src/lambda_function.lambda_handler
-    # timeout: 30
-    # memorySize: 512
-    # image:
-    #   name: serverless_yolo
-    #   command:
-    #     - src/lambda_function.lambda_handler
+  analyseImage:
+    #handler: src/lambda_function.lambda_handler
+    timeout: 30
+    memorySize: 1024
+    image:
+      name: demo_ecr_image
+      command:
+        - src/lambda_function.lambda_handler

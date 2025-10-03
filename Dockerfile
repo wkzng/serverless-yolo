@@ -4,11 +4,11 @@ FROM amazon/aws-lambda-python:3.11.2025.05.04.05-x86_64 AS builder
 RUN yum install -y gcc-c++ make && yum clean all
 
 WORKDIR /build
-COPY requirements-prod.txt .
+COPY requirements_prod.txt .
 
 # Install Python deps into a temp dir
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements-prod.txt --target /build/python
+    && pip install --no-cache-dir -r requirements_prod.txt --target /build/python
 
 # -------------------------------
 FROM amazon/aws-lambda-python:3.11.2025.05.04.05-x86_64
@@ -21,7 +21,7 @@ COPY --from=builder /build/python ${LAMBDA_TASK_ROOT}
 
 # Copy your code + models
 COPY src/ ${LAMBDA_TASK_ROOT}/src/
-COPY models/prod/ ${LAMBDA_TASK_ROOT}/models/
+COPY models/ ${LAMBDA_TASK_ROOT}/models/
 
 # Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
 CMD ["src/dummy_handler.main"]
