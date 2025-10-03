@@ -1,0 +1,5 @@
+Pillow
+openvino
+opencv-python
+requests
+pyyaml

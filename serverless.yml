@@ -1,0 +1,51 @@
+
+service: demo-serverless-yolo
+
+frameworkVersion: '3'
+useDotenv: true
+
+
+provider:
+  name: aws
+  runtime: python3.11
+  stage: ${opt:stage, 'dev'}
+  region: ${env:AWS_REGION, 'us-east-1'}
+  ecr:
+    images:
+      demo_ecr_image:
+        path: ./
+        platform: linux/amd64
+  environment:
+    STAGE: ${self:provider.stage}
+
+
+package:
+  patterns:
+    - '!venv/**'
+    - '!.env*'
+    - '!.gitignore'
+    - '!.dockerignore'
+    - '!node_modules'
+    - '!models'
+    - '!docker'
+    - '!notebooks'
+
+
+plugins:
+  - serverless-prune-plugin
+
+custom:
+  prune:
+    automatic: true
+    includeLayers: true
+    number: 2
+
+functions:
+  analyseImage:
+    #handler: src/lambda_function.lambda_handler
+    timeout: 30
+    memorySize: 1024
+    image:
+      name: demo_ecr_image
+      command:
+        - src/lambda_function.lambda_handler
