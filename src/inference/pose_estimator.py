@@ -51,8 +51,18 @@ def postprocess_pose_ov(output, input_hw, orig_img, class_names, ratio_pad=None,
     return results
 
 
+
 class OVPoseModel:
     def __init__(self, model_path: str, device: str = "CPU", conf_thres:float=0.25, class_names: dict[int, str] | None = None):
+        """
+        Initializes the OpenVINO pose estimation model for lightweight inference.
+        This class is dependency-free from PyTorch and Ultralytics.
+
+        Args:
+            model_path (str): Path to the .xml file of the OpenVINO model.
+            device (str): The device to run inference on (e.g., "CPU", "GPU").
+            conf_thres (float): Confidence threshold for filtering detections.
+        """  
         self.core = Core()
         self.model = self.core.read_model(model_path)
         self.compiled_model = self.core.compile_model(self.model, device)
@@ -75,27 +85,3 @@ class OVPoseModel:
         """Perform pose estimation on people present on the image"""
         return self.predict(pil_image=pil_image, conf_thres=conf_thres)
     
-
-
-if __name__ == "__main__":
-    import openvino as ov
-    from ultralytics import YOLO
-    import os
-
-    #base model folder path
-    base_model_path ="yolo11-pose.pt"
-    base_model_id = os.path.splittext(base_model_path)[0]
-
-    #load reference model
-    model = YOLO(base_model_path)
-
-    # Compress model and create a folder {base_model_id}_openvino_model/ containinng
-    # - {base_model_id}.xml
-    # - {base_model_id}.bin
-    # - metadata.yaml
-    model.export(format="openvino", dynamic=False, simplify=True, opset=12, nms=True)
-
-    # yolo11n_openvino_model/
-    # ├── yolo11n.xml
-    # ├── yolo11n.bin
-    # └── metadata.yaml

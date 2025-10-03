@@ -10,6 +10,15 @@ from .utils import preprocess, scale_boxes
 
 class OVDetModel:
     def __init__(self, model_path: str, conf_thres:float=0.25, device: str="CPU"):
+        """
+        Initializes the OpenVINO detection model for lightweight inference.
+        This class is dependency-free from PyTorch and Ultralytics.
+
+        Args:
+            model_path (str): Path to the .xml file of the OpenVINO model.
+            conf_thres (float): Confidence threshold for filtering detections.
+            device (str): The device to run inference on (e.g., "CPU", "GPU").
+        """
         self.core = Core()
         self.model = self.core.read_model(model_path)
         self.compiled_model = self.core.compile_model(self.model, device)
@@ -47,9 +56,6 @@ class OVDetModel:
         assert isinstance(pil_image, Image.Image)
         conf_thres = conf_thres or self.conf_thres
 
-        img_width, img_height = pil_image.size
-        img_area = img_width * img_height
-
         inp, orig_img, (ratio, (dw, dh)) = preprocess(pil_image, self.imgsz)
         raw = self.compiled_model(inp)[self.output_layer][0]
         detections = self.postprocess(raw, inp.shape[2:], orig_img, ratio_pad=(ratio, (dw, dh)), conf_thres=conf_thres)
@@ -58,7 +64,6 @@ class OVDetModel:
         results = []
         for x1, y1, x2, y2, score, cls_id in detections:
             label = self.class_names.get(int(cls_id), str(int(cls_id)))
-            local_area = (y2 - y1) * (x2 - x1)
             results.append({
                 "box": [int(x1), int(y1), int(x2), int(y2)],
                 "confidence": round(score, 3),
@@ -72,29 +77,3 @@ class OVDetModel:
         """Perform object detection on the input image"""
         return self.predict(pil_image=pil_image, conf_thres=conf_thres)
     
-
-
-
-if __name__ == "__main__":
-    import openvino as ov
-    from ultralytics import YOLO
-    import os
-
-    #base model folder path
-    base_model_path ="yolov11n-dect.pt"
-    base_model_id = os.path.splitext(base_model_path)[0]
-
-    #load reference model
-    model = YOLO(base_model_path)
-
-    # Compress model and create a folder {base_model_id}_openvino_model/ containinng
-    # - {base_model_id}.xml
-    # - {base_model_id}.bin
-    # - metadata.yaml
-    model.export(format="openvino", dynamic=False, simplify=True, opset=12, nms=True)
-
-    # Export model from dev to production folder
-    source_path = f"{base_model_id}_openvino_model/"
-    export_path = source_path.replace("/dev/", "/prod/")
-    os.makedirs(export_path,exist_ok=True)
-    os.system(f"mv {source_path} {export_path}")

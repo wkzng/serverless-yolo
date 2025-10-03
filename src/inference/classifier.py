@@ -11,6 +11,15 @@ from .utils import preprocess
 
 class OVClfModel:
     def __init__(self, model_path: str, topk:int=1, device: str = "CPU"):
+        """
+        Initializes the OpenVINO classification model for lightweight inference.
+        This class is dependency-free from PyTorch and Ultralytics.
+
+        Args:
+            model_path (str): Path to the .xml file of the OpenVINO model.
+            topk (int): The number of top results to return.
+            device (str): The device to run inference on (e.g., "CPU", "GPU").
+        """
         self.core = Core()
         self.topk = topk
         self.model = self.core.read_model(model_path)
@@ -55,29 +64,3 @@ class OVClfModel:
         """Perform object detection on the input image"""
         return self.predict(pil_image=pil_image, topk=topk)
     
-
-
-
-if __name__ == "__main__":
-    import openvino as ov
-    from ultralytics import YOLO
-    import os
-
-    #base model folder path
-    base_model_path ="yolo11s-cls.pt"
-    base_model_id = os.path.splitext(base_model_path)[0]
-
-    #load reference model
-    model = YOLO(base_model_path)
-
-    # Compress model and create a folder {base_model_id}_openvino_model/ containinng
-    # - {base_model_id}.xml
-    # - {base_model_id}.bin
-    # - metadata.yaml
-    model.export(format="openvino", dynamic=False, simplify=True, opset=12)
-
-    # Export model from dev to production folder
-    source_path = f"{base_model_id}_openvino_model/"
-    export_path = source_path.replace("/dev/", "/prod/")
-    os.makedirs(export_path,exist_ok=True)
-    os.system(f"mv {source_path} {export_path}")
