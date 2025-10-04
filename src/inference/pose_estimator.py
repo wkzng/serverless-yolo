@@ -81,7 +81,7 @@ class OVPoseModel:
         results = postprocess_pose_ov(raw, inp.shape[2:], orig_img, self.class_names, ratio_pad, conf_thres)
         return results
 
-    def __call__(self, pil_image: Image.Image, conf_thres:float=None)-> list[dict]:
+    def __call__(self, pil_image: Image.Image, conf_thres:float=None, **kwargs)-> list[dict]:
         """Perform pose estimation on people present on the image"""
         return self.predict(pil_image=pil_image, conf_thres=conf_thres)
     

@@ -73,7 +73,7 @@ class OVDetModel:
         return results
     
 
-    def __call__(self, pil_image: Image.Image, conf_thres:float=None)-> list[dict]:
+    def __call__(self, pil_image: Image.Image, conf_thres:float=None, **kwargs)-> list[dict]:
         """Perform object detection on the input image"""
         return self.predict(pil_image=pil_image, conf_thres=conf_thres)
     

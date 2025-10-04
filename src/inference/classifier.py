@@ -60,7 +60,7 @@ class OVClfModel:
         return self.postprocess(raw, self.class_names, topk=topk)
 
 
-    def __call__(self, pil_image: Image.Image, topk:float=None)-> list[dict]:
+    def __call__(self, pil_image: Image.Image, topk:float=None, **kwargs)-> list[dict]:
         """Perform object detection on the input image"""
         return self.predict(pil_image=pil_image, topk=topk)
     
